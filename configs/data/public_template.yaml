@@ -1,0 +1,47 @@
+# Template for training on publicly available ground-truth recordings.
+# Place data below data/ (or override paths.data_dir=/absolute/path) and replace
+# the two lists with paths relative to that directory.
+_target_: src.data.calcium_datamodule.CalciumDataModule
+
+data_dir: ${paths.data_dir}
+split_mode: file
+train_files:
+  - train/example_mini.mat
+test_files:
+  - test/example_mini.mat
+
+batch_size: 128
+num_workers: 4
+pin_memory: true
+persistent_workers: true
+seed_value: ${seed}
+
+sampling_rate: 30.0
+smoothing: 0.025
+segment_len: 128
+context_left: 30
+context_right: 30
+overlap_size: 2
+feature_mode: raw
+resample: false
+causal_kernel: false
+denoise_method: none
+denoise_params: {}
+ephys_fs: 10000.0
+target_clip: null
+global_norm: none
+bad_data_json: null
+
+# No simulated data are configured in the public template.
+use_simulated_data: false
+simulated_data_dir: null
+extra_simulated_data_dirs: []
+max_sim_dirs: 0
+
+fewshot_k: 0
+fewshot_pool_k: 0
+fewshot_seed: 0
+fewshot_val_ratio: 0.15
+train_subsample_fraction: 1.0
+train_subsample_seed: ${seed}
+train_max_indicator_families: 0

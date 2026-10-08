@@ -1,0 +1,32 @@
+# Python and editor artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+.env
+.DS_Store
+
+# Runtime outputs and temporary browser uploads
+result/*
+!result/.gitkeep
+outputs/
+
+# Do not commit any recordings. Keep this documentation file only.
+data/*
+!data/README.md
+
+# The repository distributes exactly one inference checkpoint.
+checkpoints/*
+!checkpoints/spikessl_ui_default.ckpt
+!checkpoints/.gitkeep
+
+# Training logs and local packaging artifacts
+logs/
+dist/
+build/
+*.egg-info/
+
+# Historical and private-experiment source retained only in the local workspace.
+*.deleted
+src/callbacks/private_fsim_zero_shot.py

@@ -1,0 +1,104 @@
+# @package _global_
+
+
+
+#   loss.type=asym_huber
+#   loss.beta=2.5
+#   loss.beta_under=0.2
+#   loss.delta=0.12
+#   loss.peak_q=0.93
+#   loss.peak_alpha=0.8
+
+
+
+
+#   asym_huber       — Huber + beta*over_pen + mean_lambda*mean_pen
+
+
+#                      = exp(-log_var)*Huber + 0.5*log_var + over + under_peak + mean
+
+
+
+
+
+
+
+#   peak_q/peak_alpha = peak_huber
+
+
+
+#   loss.type=asym_huber loss.beta=2.0 loss.mean_lambda=0.2 loss.delta=0.12
+
+loss:
+
+  type: peak_huber
+
+  # weighted_mse
+  alpha: 5.0
+
+
+  lambda: 0.1
+
+
+  #   weighted_mse / corr_mse / poisson / asym_huber / peak_huber / corr_peak_huber
+  beta: 4.0
+
+
+
+
+  beta_under: 0.2
+
+
+
+  delta: 0.1
+
+
+
+  mean_lambda: 0.1
+
+
+
+  peak_q: 0.9
+  peak_alpha: 1.0
+
+
+  zero_thr: 0.01
+
+
+
+  gate_loss_weight: 1.0
+
+
+
+  gate_focal_gamma: 0
+
+
+  # gate_loss = weight*BCE + bg_penalty * mean(gate | target==0)
+
+
+  gate_bg_penalty: 0.0
+
+
+
+
+  corr_lambda: 0.0
+
+
+
+loss_type: ${loss.type}
+loss_alpha: ${loss.alpha}
+loss_lambda: ${loss.lambda}
+loss_beta: ${loss.beta}
+loss_beta_under: ${loss.beta_under}
+loss_delta: ${loss.delta}
+loss_mean_lambda: ${loss.mean_lambda}
+loss_peak_q: ${loss.peak_q}
+loss_peak_alpha: ${loss.peak_alpha}
+loss_zero_thr: ${loss.zero_thr}
+gate_loss_weight: ${loss.gate_loss_weight}
+gate_focal_gamma: ${loss.gate_focal_gamma}
+loss_gate_bg_penalty: ${loss.gate_bg_penalty}
+loss_corr_lambda: ${loss.corr_lambda}
+
+
+

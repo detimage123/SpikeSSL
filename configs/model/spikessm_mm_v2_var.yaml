@@ -1,0 +1,42 @@
+_target_: src.models.generic_module.GenericLitModule
+
+name: "spikessm_mm_v2_var"
+loss_type: ${loss.type}
+loss_alpha: ${loss.alpha}
+loss_lambda: ${loss.lambda}
+loss_beta: ${loss.beta}
+loss_beta_under: ${loss.beta_under}
+loss_delta: ${loss.delta}
+loss_mean_lambda: ${loss.mean_lambda}
+loss_peak_q: ${loss.peak_q}
+loss_peak_alpha: ${loss.peak_alpha}
+loss_zero_thr: ${loss.zero_thr}
+
+optimizer: ${optim.optimizer}
+
+scheduler: ${lr.scheduler}
+
+gate_loss_weight: ${loss.gate_loss_weight}
+gate_focal_gamma: ${loss.gate_focal_gamma}
+gate_bg_penalty: ${loss.gate_bg_penalty}
+loss_corr_lambda: ${loss.corr_lambda}
+
+pretrained_ckpt: ""
+freeze_mode: "none"
+
+net:
+  _target_: src.models.components.spikessm_mm_v2_var.SpikeSSMMultiModalModel_v2_var
+  in_features: 1
+  d_model: 192
+  d_cond: 64
+  n_blocks: 8
+  d_conv: 7
+  expand: 2
+  refine_layers: 3
+  dropout: 0.1
+  use_sigmoid: false
+  use_gate: true
+  gate_threshold: 0.5
+  use_checkpoint: true
+  var_warmup_epochs: 2
+  fewshot_mode: false

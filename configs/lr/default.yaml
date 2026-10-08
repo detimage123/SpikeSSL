@@ -1,0 +1,21 @@
+# @package _global_
+
+
+
+
+#   lr=constant
+#   lr=cosine
+#   lr=step
+#   lr=plateau
+
+#   lr.scheduler.patience=10 lr.scheduler.factor=0.3
+lr:
+  name: plateau
+  base_lr: 0.001
+  scheduler:
+    _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+    _partial_: true
+    mode: max
+    patience: 6
+    factor: 0.5
+    min_lr: 1.0e-6

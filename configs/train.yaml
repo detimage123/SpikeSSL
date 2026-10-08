@@ -1,0 +1,28 @@
+# @package _global_
+
+
+defaults:
+  - _self_
+  - data: public_template
+  - model: spikessm_mm_v2_var
+  - loss: default
+  - lr: default
+  - optim: default
+  - trainer: default
+  - paths: default
+  - callbacks: default
+
+
+hydra:
+  run:
+    dir: ${paths.root_dir}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+
+task_name: "train"            # task name
+tags: ["spikessl"]
+train: True
+test: False
+ckpt_path: null
+save_loo_ckpt: false          # save best ckpt to ckpt/loo_pretrain/ for few-shot
+gpu: 0
+seed: 42

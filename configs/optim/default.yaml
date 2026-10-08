@@ -1,0 +1,19 @@
+# @package _global_
+
+# Default optimizer profile (AdamW)
+# optim:
+#   name: adamw
+#   optimizer:
+#     _target_: torch.optim.AdamW
+#     _partial_: true
+#     lr: ${lr.base_lr}
+#     weight_decay: 1e-3
+
+optim:
+  name: adam
+  optimizer:
+    _target_: torch.optim.Adam
+    _partial_: true
+    lr: ${lr.base_lr}
+    betas: [0.9, 0.99]
+    weight_decay: 0.0
