@@ -1,6 +1,6 @@
 _target_: src.models.generic_module.GenericLitModule
 
-name: "spikessm_mm_v2_var"
+name: "spikessl"
 loss_type: ${loss.type}
 loss_alpha: ${loss.alpha}
 loss_lambda: ${loss.lambda}
@@ -13,7 +13,6 @@ loss_peak_alpha: ${loss.peak_alpha}
 loss_zero_thr: ${loss.zero_thr}
 
 optimizer: ${optim.optimizer}
-
 scheduler: ${lr.scheduler}
 
 gate_loss_weight: ${loss.gate_loss_weight}
@@ -25,7 +24,7 @@ pretrained_ckpt: ""
 freeze_mode: "none"
 
 net:
-  _target_: src.models.components.spikessm_mm_v2_var.SpikeSSMMultiModalModel_v2_var
+  _target_: src.models.components.spikessl.SpikeSSL
   in_features: 1
   d_model: 192
   d_cond: 64

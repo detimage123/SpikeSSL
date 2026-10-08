@@ -4,7 +4,7 @@
 defaults:
   - _self_
   - data: public_template
-  - model: spikessm_mm_v2_var
+  - model: spikessl
   - loss: default
   - lr: default
   - optim: default

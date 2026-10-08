@@ -49,7 +49,7 @@ INDICATOR_NAMES = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run SpikeSSL on fluorescence-trace files.")
     parser.add_argument("--input-files", nargs="+", type=Path, required=True)
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "result" / "spikessm_public_examples_ui")
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "result" / "spikessl_inference")
     parser.add_argument("--ckpt", type=Path, default=DEFAULT_CKPT)
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--indicator-id", type=int, default=0)

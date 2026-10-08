@@ -1,8 +1,8 @@
-"""SpikeSSM-MM: Multi-Modal Indicator-Aware State-Space Model.
+"""SpikeSSL-MM: Multi-Modal Indicator-Aware State-Space Model.
 
 Core idea: different calcium indicators produce fundamentally different signal
 morphology (rise time, decay constant, SNR, nonlinearity). A single model
-that ignores this heterogeneity must learn a suboptimal compromise. SpikeSSM-MM
+that ignores this heterogeneity must learn a suboptimal compromise. SpikeSSL-MM
 addresses this via two complementary conditioning mechanisms:
 
 1. **Indicator Embedding + Adaptive LayerNorm (AdaLN)**:
@@ -23,7 +23,7 @@ The conditioning vector modulates:
 - AdaLN scale/shift in every StateBlock
 - IIR decay rate bias (α_shift): adapts temporal integration per indicator
 
-Architecture: identical backbone to SpikeSSM (flat, no downsample, bidirectional
+Architecture: identical backbone to SpikeSSL (flat, no downsample, bidirectional
 IIR + DepthwiseConv + SwiGLU), with ~50K additional parameters for conditioning.
 """
 
@@ -32,7 +32,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint as grad_checkpoint
 
-from src.models.components.spikessm import _causal_scan
+from src.models.components.spikessl_layers import _causal_scan
 
 
 # ──────────────── Indicator Vocabulary ──────────────── #
@@ -268,7 +268,7 @@ class CondTemporalStateLayer(nn.Module):
         self.in_proj = nn.Linear(d_model, d_model)
         self.out_proj = nn.Linear(2 * d_model, d_model)
 
-        # Base decay rates (same init as SpikeSSM)
+        # Base decay rates (same init as SpikeSSL)
         self.alpha_fwd_logit = nn.Parameter(torch.linspace(0.0, 4.0, d_model))
         self.alpha_bwd_logit = nn.Parameter(torch.linspace(0.0, 4.0, d_model))
 
@@ -304,7 +304,7 @@ class CondTemporalStateLayer(nn.Module):
 class MMStateBlock(nn.Module):
     """Conditioned StateBlock: AdaLN + Cond-IIR → DepthwiseConv → SwiGLU.
 
-    Same structure as SpikeSSM's StateBlock, but LayerNorms are replaced
+    Same structure as SpikeSSL's StateBlock, but LayerNorms are replaced
     with AdaLN and the IIR accepts a conditioning vector.
     """
 
@@ -374,8 +374,8 @@ class DilatedRefine(nn.Module):
 
 # ──────────────── Main Model ──────────────── #
 
-class SpikeSSMMultiModalModel(nn.Module):
-    """SpikeSSM-MM: Multi-Modal Indicator-Aware SSM for Spike Deconvolution.
+class SpikeSSLConditioning(nn.Module):
+    """SpikeSSL-MM: Multi-Modal Indicator-Aware SSM for Spike Deconvolution.
 
     Architecture (flat, no downsampling):
 
@@ -390,7 +390,7 @@ class SpikeSSMMultiModalModel(nn.Module):
             │
         DilatedRefine → Sigmoid Head + Gate → (B, T, 1)
 
-    Compared to SpikeSSM:
+    Compared to SpikeSSL:
     - +ConditioningEncoder: indicator embedding + signal statistics (~30K params)
     - +AdaLN in each block: replaces LayerNorm with conditioned norm (~20K params)
     - +α_shift in each IIR: indicator-dependent decay rate bias (~10K params)

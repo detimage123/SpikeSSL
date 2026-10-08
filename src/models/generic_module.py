@@ -10,9 +10,6 @@ from torchmetrics.regression import PearsonCorrCoef
 from src.utils.signal_processing import smooth_spikes
 
 import hydra
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 
 class GenericLitModule(LightningModule):
@@ -65,7 +62,7 @@ class GenericLitModule(LightningModule):
         self.best_val_epoch = 0
         self.best_val_metric = float("-inf")  # tracks best (corr - |bias|) for global best record
 
-        # Check which optional kwargs net.forward accepts (for SpikeSSM-MM variants)
+        # Check which optional kwargs net.forward accepts (for SpikeSSL-MM variants)
         _fwd_params = inspect.signature(self.net.forward).parameters
         self._net_accepts_indicator = 'indicator_id' in _fwd_params
         self._net_accepts_fs = 'fs' in _fwd_params
@@ -173,23 +170,17 @@ class GenericLitModule(LightningModule):
         except Exception:
             base_dir = os.getcwd()
 
-        best_dir_override = os.environ.get("SPIKESSM_BEST_CONFIG_DIR", "").strip()
+        best_dir_override = os.environ.get("SPIKESSL_BEST_CONFIG_DIR", "").strip()
 
-        
-        # model=spikessm_mm_v2_var + data=loo_ogb1 → global_best_config_mm_v2_var_loo_ogb1.json
-        # model=spikessm_mm_v2_var + default data  → global_best_config_mm_v2_var.json
-        # model=spikessm_mm_v2     + default data  → global_best_config_mm_v2.json
-        
         suffix = ""
         try:
             from hydra.core.global_hydra import GlobalHydra
             if GlobalHydra.instance().is_initialized():
                 from hydra.core.hydra_config import HydraConfig
                 choices = HydraConfig.get().runtime.choices
-                # model suffix: strip "spikessm_" prefix to keep names short
                 model_name = choices.get("model", None)
                 if model_name and model_name != "null":
-                    model_suffix = model_name.replace("spikessm_", "")
+                    model_suffix = model_name.replace("spikessl_", "")
                     suffix += f"_{model_suffix}"
                 # data suffix
                 data_name = choices.get("data", None)
@@ -998,178 +989,7 @@ class GenericLitModule(LightningModule):
         print(f"  pred -> min={all_preds_raw.min():.4f}  max={all_preds_raw.max():.4f}  mean={all_preds_raw.mean():.4f}")
         print(f"  target -> min={all_targets_cat.min():.4f}  max={all_targets_cat.max():.4f}  mean={all_targets_cat.mean():.4f}\n")
 
-        if os.environ.get("SPIKESSM_DISABLE_EVAL_PLOT", "0") != "1":
-            self._save_eval_plot(
-                all_trial_inputs,
-                all_trial_preds,
-                all_trial_targets,
-                all_preds_cat,
-                all_targets_cat,
-                epoch,
-                trial_stds=all_trial_std,
-            )
-
         self.val_data.clear()
-
-    def _save_eval_plot(self, trial_inputs, trial_preds, trial_targets, all_preds, all_targets, epoch, trial_stds=None):
-        try:
-            base_dir = hydra.utils.get_original_cwd()
-        except Exception:
-            base_dir = os.getcwd()
-
-        save_dir = os.path.join(base_dir, "result", self._name, "eval_plots")
-        os.makedirs(save_dir, exist_ok=True)
-
-        
-        from scipy.stats import pearsonr
-        trial_corrs = []
-        for i, (pred_i, gt_i) in enumerate(zip(trial_preds, trial_targets)):
-            p = pred_i[:3000]
-            g = gt_i[:3000]
-            if len(p) > 2 and np.std(p) > 1e-8 and np.std(g) > 1e-8:
-                r3000, _ = pearsonr(p, g)
-            else:
-                r3000 = float("nan")
-
-            if len(pred_i) > 2 and np.std(pred_i) > 1e-8 and np.std(gt_i) > 1e-8:
-                r_full, _ = pearsonr(pred_i, gt_i)
-            else:
-                r_full = float("nan")
-
-            trial_corrs.append((i, r3000, r_full))
-
-        left_ids = list(range(min(3, len(trial_preds))))
-        valid_corrs = [(i, r3000) for i, r3000, _ in trial_corrs if np.isfinite(r3000)]
-        if len(valid_corrs) == 0:
-            right_ids = list(range(min(3, len(trial_preds)), min(6, len(trial_preds))))
-        else:
-            sorted_by_corr = sorted(valid_corrs, key=lambda x: x[1])
-            used = set(left_ids)
-            right_ids = [i for i, _ in sorted_by_corr if i not in used][:3]
-            if len(right_ids) < 3:
-                for i in range(len(trial_preds)):
-                    if i not in used and i not in right_ids:
-                        right_ids.append(i)
-                    if len(right_ids) == 3:
-                        break
-
-        slot_ids = left_ids + right_ids
-        n_show = min(len(slot_ids), 6)
-        fig, axes = plt.subplots(
-            7, 2,
-            figsize=(18, 18),
-            gridspec_kw={"height_ratios": [1, 1, 1, 1, 1, 1, 1.4]},
-        )
-
-        for i in range(6):
-            col = 0 if i < 3 else 1
-            row_base = (i % 3) * 2
-            ax_ca = axes[row_base, col]
-            ax_sp = axes[row_base + 1, col]
-
-            if i >= n_show:
-                ax_ca.axis("off")
-                ax_sp.axis("off")
-                continue
-
-            tid = slot_ids[i]
-            pred = np.clip(trial_preds[tid][:3000], 0, None)
-            gt = trial_targets[tid][:3000]
-            t = np.arange(len(pred))
-
-            
-            if tid < len(trial_inputs):
-                ca = trial_inputs[tid][:3000]
-                ax_ca.plot(np.arange(len(ca)), ca, color="olivedrab", linewidth=0.7)
-            ax_ca.set_ylabel("ΔF (z-score)", fontsize=8)
-            side = "left" if i < 3 else "worst"
-            if i < 3:
-                ax_ca.set_title(f"Trial {tid+1} — calcium input", fontsize=9)
-            else:
-                ax_ca.set_title(f"Trial {tid+1} ({side}) — calcium input", fontsize=9)
-            ax_ca.set_xticklabels([])
-
-            
-            ax_sp.plot(t, gt, color="steelblue", linewidth=0.8, label="ground truth")
-            ax_sp.plot(t, pred, color="tomato", linewidth=0.8, alpha=0.85, label="predicted")
-            if trial_stds is not None and tid < len(trial_stds):
-                std_i = trial_stds[tid][:3000]
-                band_lo = np.clip(pred - 2 * std_i, 0, None)
-                band_hi = pred + 2 * std_i
-                ax_sp.fill_between(t, band_lo, band_hi,
-                                   color="tomato", alpha=0.15, label="±2σ")
-            if len(pred) > 2 and np.std(pred) > 1e-8 and np.std(gt) > 1e-8:
-                r3000, _ = pearsonr(pred, gt)
-            else:
-                r3000 = float("nan")
-
-            pred_full = trial_preds[tid]
-            gt_full = trial_targets[tid]
-            if len(pred_full) > 2 and np.std(pred_full) > 1e-8 and np.std(gt_full) > 1e-8:
-                r_full, _ = pearsonr(pred_full, gt_full)
-            else:
-                r_full = float("nan")
-            if i < 3:
-                ax_sp.set_title(f"Trial {tid+1}  corr3000={r3000:.3f}  corr_full={r_full:.3f}", fontsize=9)
-            else:
-                ax_sp.set_title(f"Trial {tid+1} ({side})  corr3000={r3000:.3f}  corr_full={r_full:.3f}", fontsize=9)
-            ax_sp.legend(fontsize=7, loc="upper right")
-            ax_sp.set_ylabel("spike rate", fontsize=8)
-
-        
-        ax_input = axes[-1, 0]
-        ax_gt = axes[-1, 1]
-        finite_full = [(i, rf) for i, _, rf in trial_corrs if np.isfinite(rf)]
-        if len(finite_full) > 0:
-            worst_tid, worst_r_full = min(finite_full, key=lambda x: x[1])
-            pred_full = np.clip(trial_preds[worst_tid], 0, None)
-            gt_full = trial_targets[worst_tid]
-            t_full = np.arange(len(pred_full))
-
-            # Left: input calcium trace
-            if worst_tid < len(trial_inputs):
-                ca_full = trial_inputs[worst_tid]
-                ax_input.plot(np.arange(len(ca_full)), ca_full, color="olivedrab", linewidth=0.6)
-            ax_input.set_ylabel("ΔF", fontsize=8)
-
-            # Right: GT (blue) + Pred (red) overlaid
-            ax_gt.plot(t_full, gt_full, color="steelblue", linewidth=0.8, label="GT")
-            ax_gt.plot(t_full, pred_full, color="tomato", linewidth=0.8, alpha=0.8, label="Pred")
-            if trial_stds is not None and worst_tid < len(trial_stds):
-                std_worst = trial_stds[worst_tid]
-                band_lo = np.clip(pred_full - 2 * std_worst, 0, None)
-                band_hi = pred_full + 2 * std_worst
-                ax_gt.fill_between(t_full, band_lo, band_hi,
-                                   color="tomato", alpha=0.12, label="±2σ")
-            ax_gt.legend(fontsize=7, loc="upper right")
-
-            p3000 = pred_full[:3000]
-            g3000 = gt_full[:3000]
-            if len(p3000) > 2 and np.std(p3000) > 1e-8 and np.std(g3000) > 1e-8:
-                worst_r3000, _ = pearsonr(p3000, g3000)
-            else:
-                worst_r3000 = float("nan")
-
-            ax_input.set_title(
-                f"Worst trial #{worst_tid+1} input (len={len(pred_full)})  corr_full={worst_r_full:.3f}  corr3000={worst_r3000:.3f}",
-                fontsize=9,
-            )
-            ax_gt.set_title(f"Worst trial #{worst_tid+1} GT vs Pred", fontsize=9)
-            ax_input.set_xlabel("time", fontsize=8)
-            ax_gt.set_xlabel("time", fontsize=8)
-            ax_gt.set_ylabel("spike rate", fontsize=8)
-        else:
-            ax_input.axis("off")
-            ax_gt.axis("off")
-            ax_input.text(0.02, 0.95, "No finite full-trial corr available", va="top", ha="left", fontsize=9)
-
-        var_tag = "_variance" if trial_stds is not None else ""
-        fig.suptitle(f"Epoch {epoch + 1}{' (with variance)' if trial_stds is not None else ''}", fontsize=11)
-        plt.tight_layout()
-        save_path = os.path.join(save_dir, f"eval_epoch_{epoch + 1:03d}{var_tag}.png")
-        plt.savefig(save_path, dpi=100)
-        plt.close(fig)
-        print(f"  → eval plot saved: {save_path}")
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         loss, preds, targets, weight, meta = self.model_step(batch)

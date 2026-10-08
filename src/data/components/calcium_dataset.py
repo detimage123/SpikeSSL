@@ -10,7 +10,7 @@ from pynwb import NWBHDF5IO
 
 from src.utils import pylogger
 from src.utils.signal_processing import denoise_signal, smooth_spikes, resample_trace
-from src.models.components.spikessm_mm import (
+from src.models.components.spikessl_conditioning import (
     parse_indicator_id, parse_species_id, parse_tissue_id, parse_cell_type_id,
 )
 

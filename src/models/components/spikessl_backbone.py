@@ -1,6 +1,6 @@
-"""SpikeSSM-MM-v2: Per-Sample IIR Decay + Sampling Rate Conditioning.
+"""SpikeSSL-MM-v2: Per-Sample IIR Decay + Sampling Rate Conditioning.
 
-Root causes of v1 (spikessm_mm.py) not working:
+Root causes of v1 (spikessl_conditioning.py) not working:
 
 1. CRITICAL BUG — CondTemporalStateLayer averaged per-sample alpha deltas over
    the batch: `alpha_fwd_mean = alpha_fwd.mean(dim=0)`. A batch of mixed
@@ -34,7 +34,7 @@ v2 fixes:
    flow; fewer unnecessary conditioning parameters.
 
 Everything else (stem, DilatedRefine, gate head, checkpoint) is identical to
-SpikeSSM / SpikeSSM-MM so existing training infrastructure works unchanged.
+SpikeSSL / SpikeSSL-MM so existing training infrastructure works unchanged.
 """
 
 from typing import Tuple
@@ -44,8 +44,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint as grad_checkpoint
 
-from src.models.components.spikessm import DilatedRefine
-from src.models.components.spikessm_mm import (
+from src.models.components.spikessl_layers import DilatedRefine
+from src.models.components.spikessl_conditioning import (
     INDICATOR_VOCAB, NUM_INDICATORS, parse_indicator_id,
     SignalStatistics, AdaLN,
 )
@@ -248,7 +248,7 @@ class CondTemporalStateLayer_v2(nn.Module):
         self.in_proj = nn.Linear(d_model, d_model)
         self.out_proj = nn.Linear(2 * d_model, d_model)
 
-        # Base decay rates — same diverse init as SpikeSSM
+        # Base decay rates — same diverse init as SpikeSSL
         self.alpha_fwd_logit = nn.Parameter(torch.linspace(0.0, 4.0, d_model))
         self.alpha_bwd_logit = nn.Parameter(torch.linspace(0.0, 4.0, d_model))
 
@@ -341,8 +341,8 @@ class MMStateBlock_v2(nn.Module):
 
 # ──────────────── Main Model ──────────────── #
 
-class SpikeSSMMultiModalModel_v2(nn.Module):
-    """SpikeSSM-MM-v2: Multi-Modal SSM for Neural Spike Deconvolution.
+class SpikeSSLBackbone(nn.Module):
+    """SpikeSSL-MM-v2: Multi-Modal SSM for Neural Spike Deconvolution.
 
     Architecture (flat, no downsampling):
 
@@ -357,7 +357,7 @@ class SpikeSSMMultiModalModel_v2(nn.Module):
             │
         LayerNorm → DilatedRefine → Sigmoid Head + Gate → (B, T, 1)
 
-    ~3.65 M params with d_model=192, n_blocks=8  (vs 3.60 M for SpikeSSM base).
+    ~3.65 M params with d_model=192, n_blocks=8  (vs 3.60 M for SpikeSSL base).
     The conditioning overhead is ~50 K params, mostly in ConditioningEncoder_v2.
     """
 
@@ -386,7 +386,7 @@ class SpikeSSMMultiModalModel_v2(nn.Module):
             n_indicators, d_cond, self.signal_stats.n_features,
         )
 
-        # ── Conv Stem (identical to SpikeSSM) ──
+        # ── Conv Stem (identical to SpikeSSL) ──
         self.stem = nn.Sequential(
             nn.Conv1d(in_features, d_model, 7, padding=3),
             nn.GELU(),

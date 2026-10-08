@@ -1,4 +1,4 @@
-"""SpikeSSM: State-Space Model for Neural Spike Deconvolution.
+"""SpikeSSL: State-Space Model for Neural Spike Deconvolution.
 
 Core idea: Calcium fluorescence is the output of a biophysical state-space system
 where the indicator concentration follows exponential decay after each spike:
@@ -200,8 +200,8 @@ class DilatedRefine(nn.Module):
         return x
 
 
-class SpikeSSMModel(nn.Module):
-    """SpikeSSM: State-Space Model for Neural Spike Deconvolution.
+class SpikeSSLModel(nn.Module):
+    """SpikeSSL: State-Space Model for Neural Spike Deconvolution.
 
     Architecture overview:
         Input (B, T, 1) → [Conv Stem] → (B, T, D)

@@ -1,4 +1,4 @@
-"""SpikeSSM-MM-v2-var: v2 + Lightweight Heteroscedastic Variance.
+"""SpikeSSL-MM-v2-var: v2 + Lightweight Heteroscedastic Variance.
 
 Design philosophy: **minimal intervention, maximal training signal.**
 
@@ -37,11 +37,11 @@ ones, acting as learned attention over the loss landscape.
 import torch
 import torch.nn as nn
 
-from src.models.components.spikessm_mm import NUM_INDICATORS
-from src.models.components.spikessm_mm_v2 import SpikeSSMMultiModalModel_v2
+from src.models.components.spikessl_conditioning import NUM_INDICATORS
+from src.models.components.spikessl_backbone import SpikeSSLBackbone
 
 
-class SpikeSSMMultiModalModel_v2_var(SpikeSSMMultiModalModel_v2):
+class SpikeSSL(SpikeSSLBackbone):
     """v2 model + lightweight heteroscedastic variance head.
 
     Inherits v2 exactly. Adds:
