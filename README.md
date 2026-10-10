@@ -93,4 +93,18 @@ webui/             Local browser interface
 result/            Runtime outputs, ignored by Git
 ```
 
+## Citation
+
+If you use SpikeSSL, please cite our paper:
+
+```bibtex
+@article{yue2026spikessl,
+  title={SpikeSSL: A Universal Spike Inference Framework with Dynamics-Informed State-Space Layers},
+  author={Yue, Chenghao and Xing, Siming and Liu, Shuran and Li, Angran and Zhang, Yuanlong},
+  journal={arXiv preprint arXiv:2610.11456},
+  year={2026},
+  url={https://arxiv.org/abs/2610.11456}
+}
+```
+
 Before publishing the repository, add the license selected by the authors.

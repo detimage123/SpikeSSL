@@ -1,0 +1,34 @@
+cff-version: 1.2.0
+message: "If you use SpikeSSL, please cite the accompanying paper."
+title: "SpikeSSL"
+type: software
+authors:
+  - family-names: Yue
+    given-names: Chenghao
+  - family-names: Xing
+    given-names: Siming
+  - family-names: Liu
+    given-names: Shuran
+  - family-names: Li
+    given-names: Angran
+  - family-names: Zhang
+    given-names: Yuanlong
+repository-code: "https://github.com/detimage123/SpikeSSL"
+url: "https://arxiv.org/abs/2610.11456"
+preferred-citation:
+  type: article
+  title: "SpikeSSL: A Universal Spike Inference Framework with Dynamics-Informed State-Space Layers"
+  authors:
+    - family-names: Yue
+      given-names: Chenghao
+    - family-names: Xing
+      given-names: Siming
+    - family-names: Liu
+      given-names: Shuran
+    - family-names: Li
+      given-names: Angran
+    - family-names: Zhang
+      given-names: Yuanlong
+  journal: "arXiv preprint arXiv:2610.11456"
+  year: 2026
+  url: "https://arxiv.org/abs/2610.11456"
